@@ -10,3 +10,5 @@
     <li>CSS</li>
     <li>PHP</li>
 </ul>
+
+<p>Demo: <a href="https://www.superapps.me/minesweeper/index.php">link</a></p>
