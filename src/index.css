@@ -1,0 +1,368 @@
+/* Css Style */
+@import url('https://fonts.cdnfonts.com/css/digital-dismay'); /* Time font */
+
+body {
+    text-align: center;
+    background: url("/minesweeper/image/background2.png");
+    padding: 0;
+    scroll-behavior: smooth;
+    font-family: monospace;
+}
+
+a:visited {
+    color: blue;
+    text-decoration: underline;
+}
+
+.game-title img {float: left;}
+
+header .game-title .title {
+    font-size: 35px;
+    float: left;
+    margin-top: 10px;
+    position: sticky;
+    font-weight: bold;
+}
+
+.minesweeper {
+    position: relative;
+    border: 3px solid;
+    border-radius: 5px;
+    padding: 0;
+    -webkit-user-select: none; 
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}
+
+.minesweeper td {
+    width: 69px;
+    height: 69px;
+    text-align: center;
+    background-color: rgb(189, 189, 189);
+    font-family: monospace;
+    font-weight: bold;
+    background-size: 60px 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 10px 0 10px;
+    border-top: 3px solid rgb(254,254,254);
+    border-left: 3px solid rgb(254,254,254);
+    border-bottom: 4px solid rgb(104,104,104);
+    border-right: 4px solid rgb(104,104,104);
+    border-collapse: collapse;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+main .head {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: -15px;
+    z-index: 10;
+    padding: 0;
+}
+
+main .head .remain-flag {font-size: 30px;}
+
+main .head .leftFlag {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+main .head .leftFlag img {
+    width: 35px;
+    height: 35px;
+    position: relative;
+}
+
+.time {
+    font-family: "Digital Dismay", sans-serif;
+    color: red;
+    float: right;
+    font-size: 35px;
+    vertical-align: middle;
+    line-height: 80px;
+}
+
+.profile {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    justify-content: center;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-info i {
+    font-size: 24px;
+    margin-right: 5px;
+    background: grey;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.dropdown {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: start;
+    width: fit-content;
+    text-align: left;
+    font-size: large;
+    border: 1px solid lightgrey;
+    border-radius: 5px;
+    padding: 5px;
+    background: rgb(231, 231, 231);
+    margin-top: 5px;
+    visibility: hidden;
+    transform: scale(0);
+    transform-origin: 100% 0;
+    transition: transform 0.2s;
+}
+
+.dropdown-show {
+    visibility: visible;
+    transform: scale(1);
+}
+
+.dropdown a {
+    text-decoration: none;
+}
+
+.dropdown a:hover {
+    background: lightgrey;
+    background-size: cover;
+}
+
+.dropdown .stats-text {
+    color: black;
+}
+
+.dropdown hr {
+    border: 0;
+    clear: both;
+    display: block;
+    width: 97%;               
+    background-color: black;
+    height: 1px;
+    border-radius: 10%;
+}
+
+.win_msg {
+    width: 300px;
+    border-radius: 20px;
+    top: 50%;
+    left: 50%;
+    border: 3px solid black;
+    transform: translate(-50%,-50%) scale(0);
+    transition: transform 0.2s;
+    visibility: hidden;
+    position: absolute;
+    background-color: rgba(238, 232, 232, 0.8);
+    z-index: 10;
+}
+
+.win_msg i {
+    position: absolute;
+    left: 100%;
+    bottom: 100%;
+    transform: translate(-25px, 23px);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.openPopup {
+    visibility: visible;
+    transform: translate(-50%,-50%) scale(1);
+}
+
+.background_blur {
+    filter: blur(5px);
+}
+
+.winHead span {
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    font-size: large;
+}
+
+.winHead {
+    height: 30px;
+    border-top-right-radius: 16px;
+    border-top-left-radius: 16px;
+    background-color: rgb(109,172,238);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.new_game_btn {
+    width: 250px;
+    height: 30px;
+    background-color: rgba(175, 175, 175, 0.7);
+    border-top: 3px solid rgb(254,254,254);
+    border-left: 3px solid rgb(254,254,254);
+    border-bottom: 4px solid rgb(104,104,104);
+    border-right: 4px solid rgb(104,104,104);
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: medium;
+    font-weight: 600;
+    margin: 10px 0 20px 0;
+}
+
+.new_game_btn:hover {opacity: 0.5;}
+
+.win_msg p {
+    color: rgba(45, 45, 45, 1);
+    font-weight: 500;
+}
+
+.win_stats {
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.win_stats span {
+    color: rgba(24, 24, 24, 1);
+    font-size: 35px;
+    font-weight: bolder;
+}
+
+.setting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: lightgrey;
+    width: 25%;
+    border: 2px solid;
+    border-radius: 5px;
+    height: 40%;
+    z-index: 10;
+    visibility: hidden;
+    transition: transform 0.2s;
+}
+
+.setting i {
+    position: absolute;
+    left: 100%;
+    bottom: 100%;
+    transform: translate(-33px, 33px);
+    font-size: 22px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.setting-show {
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0);
+}
+
+.setting-head {
+    width: 100%;
+}
+
+.setting .setting-text {
+    font-size: 24px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.diffculty-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: bold;
+}
+
+.diffculty {
+    width: 100px;
+    height: 25px;
+    border-top: 3px solid rgb(254,254,254);
+    border-left: 3px solid rgb(254,254,254);
+    border-bottom: 4px solid rgb(104,104,104);
+    border-right: 4px solid rgb(104,104,104);
+    background-color: rgb(189,189,189);
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;
+    margin: 3px;
+}
+
+.toturial {
+    font-weight: bold;
+}
+
+.toturial p {
+    margin-top: 1px;
+}
+
+.stats {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    gap: 15px;
+    border: 3px solid;
+    border-radius: 20px;
+    text-align: center;
+    background: lightgrey;
+    padding: 10px;
+    z-index: 10;
+    visibility: hidden;
+    transition: transform 0.2s;
+}
+
+.stats i {
+    position: absolute;
+    left: 100%;
+    bottom: 100%;
+    transform: translate(-28px, 28px);
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.stats-show {
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.stats .title {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.stats .win-rate-data, .stats .best-time-data, .stats .server-best-data {
+    font-size: 24px;
+    font-weight: bold;
+}

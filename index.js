@@ -1,6 +1,12 @@
+// Difficulties
 const diffcultyEasy = 9;
 const diffcultyHard = 16;
 const diffcultyExpert = 30;
+
+const diffcultyEasyLandmineCount = 10;
+const diffcultyHardLandmineCount = 40;
+const diffcultyExpertLandmineCount = 99;
+const cellWidth = 78;
 
 // Variables
 var landmine_coor = [];
@@ -8,48 +14,53 @@ var click_row_number = 0;
 var click_column_number = 0;
 var minesweeper_table = document.getElementById("minesweeper_table");
 var changed_value;
-var left_flag = 0;
+var remain_flags = 0;
 var total_time = 0;
 var win_percentage = 1;
 var tr_cell;
-var enable_flag_mode_or_not = false;
+var is_flag_mode = false;
 var first_click = true;
-var mouseDownTime = 0;
-var timeOutId = null;
 var isFlagged = false;
 var tr_cells;
 var td_cells;
 var map = [], flag_map = [], expanded = [];
-let diffculty = "Easy";
-const diffcultyEasyLandmineCount = 10;
-const diffcultyHardLandmineCount = 40;
-const diffcultyExpertLandmineCount = 99;
 var landmine_count = diffcultyEasyLandmineCount;
 var map_size = diffcultyEasy;
-const cellWidth = 78;
 var cell_size,gridWidth;
 var phpResponse;
+
+
+let diffculty = "Easy";
+let touchScreenTimeOutId;
 let won = undefined;
 let win_rate,record_time;
 let moves = [];
 let dropdown_show = false;
+let currentAction;
 
+// Code
 console.log("Javascript vesion: 1637");
-window.onload = function() {
+window.onload = () => {
     document.getElementById("game_head").style.width = minesweeper_table.clientWidth + "px";
-    if (login && !dropdown_show) {
-        document.getElementById("register").addEventListener("click", function() {
-            document.getElementById("dropdown_menu").classList.toggle("dropdown-show");
-            dropdown_show = true;
-            event.stopPropagation();
-        })
-        window.addEventListener("click", function(event) {
-            const dropdownMenu = document.getElementById("dropdown_menu");
-            if (dropdown_show && !dropdownMenu.contains(event.target)) {
-                dropdownMenu.classList.remove("dropdown-show");
-                dropdown_show = false;
-            }
-        })
+    document.getElementById("lose_audio").volume = 0.8;
+    if (login) {
+        document.getElementById("winRateData").innerHTML = win_rate + "%";
+        document.getElementById("bestTimeData").innerHTML = bestTime + "s";
+        document.getElementById("serverBestData").innerHTML = serverBestTime + "s";
+        if (!dropdown_show) {
+            document.getElementById("register").addEventListener("click", function() {
+                document.getElementById("dropdown_menu").classList.toggle("dropdown-show");
+                dropdown_show = true;
+                event.stopPropagation();
+            })
+            window.addEventListener("click", function(event) {
+                const dropdownMenu = document.getElementById("dropdown_menu");
+                if (dropdown_show && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.remove("dropdown-show");
+                    dropdown_show = false;
+                }
+            })
+        }
     }
 }
 
@@ -86,11 +97,6 @@ function generateMap(onReplay) {
     td_cells = document.querySelectorAll("td");
     tr_cells = document.querySelectorAll("tr");
     gridWidth = minesweeper_table.rows[0].cells[0].offsetWidth;
-    // td_cells.forEach(tdCell => {
-    //     if (tdCell.offsetHeight != tdCell.offsetWidth) {
-    //         tdCell.style.height = tdCell.offsetWidth;
-    //     }
-    // });
 };
 
 function addEventListeners() {
@@ -98,36 +104,27 @@ function addEventListeners() {
     td_cells.forEach(detect_td_onclick => { // check left click
         if (detect_td_onclick.parentNode.parentNode.parentNode.id != "gameHead") {
             detect_td_onclick.addEventListener("click", function () {
-                click_column(this);
-            });
-        };
-    });
-
-    tr_cells.forEach(detect_tr_onclick => {
-        if (detect_tr_onclick.parentNode.parentNode.id != "gameHead") {
-            detect_tr_onclick.addEventListener("click", function () {
-                click_row(this);
+                if (!is_flag_mode) {
+                    currentAction = "click_cell";   
+                } else {
+                    currentAction = "put_flag";
+                }
+                click(this);
             });
         };
     });
 
     // hold for 1s to place flag
-    // 移动端还有问题
     td_cells.forEach(hold_right_click => {
-        hold_right_click.addEventListener("mousedown", function () {
-            mouseDownTime = Date.now();
-
-            timeOutId = setTimeout(function () {
-                const currentTime = Date.now();
-                if (currentTime - mouseDownTime >= 1000 && !isFlagged) {
-                    right_click(hold_right_click);
-                    isFlagged = true;
-                };
+        hold_right_click.addEventListener("touchstart", function () {
+            touchScreenTimeOutId = setTimeout(function () {
+                currentAction = "put_flag";
+                click(hold_right_click);
             }, 1000);
         });
 
-        hold_right_click.addEventListener("mouseup", function (event) {
-            clearTimeout(timeOutId);
+        hold_right_click.addEventListener("touchend", function () {
+            clearTimeout(touchScreenTimeOutId);
         });
     });
 
@@ -135,7 +132,8 @@ function addEventListeners() {
     td_cells.forEach(cell => {
         cell.addEventListener("contextmenu", function (event) {
             event.preventDefault();
-            right_click(cell);
+            currentAction = "put_flag";
+            click(cell);
         })
     })
 }
@@ -150,7 +148,7 @@ function init(onReplay) {
     if (document.getElementById("mapBody")) {
         document.getElementById("mapBody").remove(); // reset minesweeper map
     } 
-    left_flag = landmine_count;
+    remain_flags = landmine_count;
     total_time = 0;
     update_time();
     first_click = true;
@@ -165,7 +163,7 @@ function init(onReplay) {
         generateMap(false);
     }
     addEventListeners();
-    document.getElementById("remaining_flag_number").innerHTML = left_flag;
+    document.getElementById("remaining_flag_number").innerHTML = remain_flags;
     try {
         clearInterval(record_time);
     }
@@ -176,13 +174,13 @@ function init(onReplay) {
 }
 
 function switch_flag_mode() {
-    if (enable_flag_mode_or_not) {
-        enable_flag_mode_or_not = false;
+    if (is_flag_mode) {
+        is_flag_mode = false;
         minesweeper_table.style.cursor = "auto";
         document.getElementById("flag_mode_button").src = "flag_button.png";
     } else {
         minesweeper_table.style.cursor = "url('Website_Icon.ico'),auto";
-        enable_flag_mode_or_not = true;
+        is_flag_mode = true;
         document.getElementById("flag_mode_button").src = "pressed_flag_button.png";
     }
 }
@@ -261,47 +259,6 @@ function generateLandmine(click_row_number, click_column_number) {
     }
 }
 
-function click_row(row,onReplay) {
-    // Get the row number
-    if (!enable_flag_mode_or_not) {
-        click_row_number = row.rowIndex;
-        if (first_click && !onReplay) {
-            generateLandmine(click_row_number,click_column_number);
-        };
-        check_landmine(click_row_number, click_column_number);
-        if (map[click_row_number][click_column_number] == 0) {
-            expand_cell(click_row_number, click_column_number);
-        };
-        first_click = false;
-        const dataList = [
-            document.getElementById("total_used_time").innerHTML,
-            "\r\n",
-            left_flag,
-            "\r\n",
-            map,
-            "\r\n",
-            flag_map,
-            "\r\n",
-            expanded,
-        ];
-        if (!onReplay) {
-            addToMoves(row.rowIndex,click_column_number,false);
-        }
-    } if (onReplay) {
-        minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundColor = "rgba(232,157,51,0.5)";
-        setTimeout(function() {minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundColor = "rgb(255,255,255)"},500);
-    }
-}
-
-function click_column(cell) {
-    // Get the cell number
-    if (enable_flag_mode_or_not && cell.parentNode.parentNode.id != "gameHead") {
-        right_click(cell);
-    } else {
-        click_column_number = cell.cellIndex;
-    };
-};
-
 function expand_cell(row, col) {
     expanded[row][col] = 1;
     minesweeper_table.rows[row].cells[col].style.border = "1px solid";
@@ -374,35 +331,29 @@ function expand_cell(row, col) {
 };
 
 function check_landmine(click_row_number, click_column_number) {
-    let milliseconds = new Date().getMilliseconds();
-    // console.log(milliseconds);
     changed_value = minesweeper_table.rows[click_row_number].cells[click_column_number];
     changed_value.style.backgroundSize = gridWidth * 0.8 + 'px' + " " + gridWidth * 0.8 + 'px';
-    if (minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundImage.includes("Minesweeper_Flag_Icon.png")) {
-        if (!isFlagged) {
-            left_flag += 1;
-            document.getElementById("remaining_flag_number").innerHTML = left_flag;
-            minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundColor = "rgb(189,189,189)";
-            minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundImage = "none";
-            flag_map[click_row_number][click_column_number] = 0;
-        } else {
-            isFlagged = false;
-        };
+    if (minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundImage.includes("./image/Minesweeper_Flag_Icon.png")) {
+        remain_flags += 1;
+        document.getElementById("remaining_flag_number").innerHTML = remain_flags;
+        minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundColor = "rgb(189,189,189)";
+        minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundImage = "none";
+        flag_map[click_row_number][click_column_number] = 0;
     } else if (map[click_row_number][click_column_number] == 9 && flag_map[click_row_number][click_column_number] != 1) {
         // If the player click on the landmine...
         won = false;
-        changed_value.style.backgroundImage = "url('Minesweeper_Icon_Bomb.png')";
+        changed_value.style.backgroundImage = "url('./image/Minesweeper_Icon_Bomb.png')";
         changed_value.style.backgroundColor = "red";
         for (let r = 0;r < map_size;r++) {
             for (let c = 0;c < map_size;c++) {
                 if (map[r][c] == 9 && flag_map[r][c] != 1) {
-                    minesweeper_table.rows[r].cells[c].style.backgroundImage = "url('Minesweeper_Icon_Bomb.png')";
+                    minesweeper_table.rows[r].cells[c].style.backgroundImage = "url('./image/Minesweeper_Icon_Bomb.png')";
                     minesweeper_table.rows[r].cells[c].style.backgroundSize = gridWidth * 0.8 + 'px' + " " + gridWidth * 0.8 + 'px';
                 } else if (map[r][c] == 9 && flag_map[r][c] == 1) {
-                    minesweeper_table.rows[r].cells[c].style.backgroundImage = "url('flagged_landmine.png')";
+                    minesweeper_table.rows[r].cells[c].style.backgroundImage = "url('./image/flagged_landmine.png')";
                     minesweeper_table.rows[r].cells[c].style.backgroundSize = gridWidth * 0.8 + 'px' + " " + gridWidth * 0.8 + 'px';
                 } else if (map[r][c] != 9 && flag_map[r][c] == 1) {
-                    minesweeper_table.rows[r].cells[c].style.backgroundImage = "url('wrong_flag.png')";
+                    minesweeper_table.rows[r].cells[c].style.backgroundImage = "url('./image/wrong_flag.png')";
                     minesweeper_table.rows[r].cells[c].style.backgroundSize = gridWidth * 0.8 + 'px' + " " + gridWidth * 0.8 + 'px';
                 };
             };
@@ -410,7 +361,7 @@ function check_landmine(click_row_number, click_column_number) {
         document.getElementById("lose_audio").play();
         clearInterval(record_time);
         if (login) {
-            store_data("lose","win_rate.php");
+            store_data("lose","./src/win_rate.php");
         };
         return;
     } else {
@@ -448,63 +399,109 @@ function check_landmine(click_row_number, click_column_number) {
     };
 };
 
-function right_click(cell,onReplay) {
-    var right_click_row = cell.parentNode.rowIndex;
-    if (left_flag > 0 && !first_click && minesweeper_table.rows[right_click_row].cells[cell.cellIndex].innerHTML == "" && flag_map[right_click_row][cell.cellIndex] != 1 && expanded[right_click_row][cell.cellIndex] != 1 && cell.parentNode.parentNode.parentNode.id != "gameHead") {
-        if (!onReplay) {
-            addToMoves(right_click_row,cell.cellIndex,true);
-        }
-        left_flag -= 1;
-        cell.style.backgroundImage = "url('Minesweeper_Flag_Icon.png')";
-        cell.style.backgroundSize = gridWidth * 0.8 + 'px' + " " + gridWidth * 0.8 + 'px';
-        document.getElementById("remaining_flag_number").innerHTML = left_flag;
-        flag_map[right_click_row][cell.cellIndex] = 1;
-        won = true;
-        for (let r = 0; r < map_size; r++) {
-            for (let c = 0; c < map_size; c++) {
-                if (map[r][c] == 9 && flag_map[r][c] !== 1) {
-                    won = false;
-                    break;
-                }
-            }
-            if (!won) {
-                break;
-            }
-        }
-
-        if (won) {;
-            clearInterval(record_time);
-            if (login) {
-                document.getElementById("time_spent").innerHTML = document.getElementById("total_used_time").innerHTML + "s";
-                if (diffculty == "Easy") {
-                    document.getElementById("landmine_removed").innerHTML = 10;
-                } else if (diffculty == "Hard") {
-                    document.getElementById("landmine_removed").innerHTML = 40;
-                } else if (diffculty == "Expert") {
-                    document.getElementById("landmine_removed").innerHTML = 99;
-                }
-                document.getElementById("win_rate").innerHTML = win_rate + "%";
-                show_popup();
-                store_data(document.getElementById("total_used_time").innerHTML,"shortest_time.php");
-                store_data("win","win_rate.php");
-            } else {
-                document.getElementById("time_spent").innerHTML = document.getElementById("total_used_time").innerHTML + "s";
-                if (diffculty == "Easy") {
-                    document.getElementById("landmine_removed").innerHTML = 10;
-                } else if (diffculty == "Hard") {
-                    document.getElementById("landmine_removed").innerHTML = 40;
-                } else if (diffculty == "Expert") {
-                    document.getElementById("landmine_removed").innerHTML = 99;
+function click(cell, onReplay=false) {
+    switch (currentAction) {
+        case "click_cell":
+            // left click 
+            if (!is_flag_mode) {
+                click_row_number = cell.parentNode.rowIndex;
+                click_column_number = cell.cellIndex;
+                if (first_click && !onReplay) {
+                    generateLandmine(click_row_number,click_column_number);
                 };
-                document.getElementById("win_rate_p").innerHTML = "<a href='login.php'>login</a> to record your win rate";
-                show_popup();
+                check_landmine(click_row_number, click_column_number);
+                if (map[click_row_number][click_column_number] == 0) {
+                    expand_cell(click_row_number, click_column_number);
+                };
+                first_click = false;
+                // const dataList = [
+                //     document.getElementById("total_used_time").innerHTML,
+                //     "\r\n",
+                //     remain_flags,
+                //     "\r\n",
+                //     map,
+                //     "\r\n",
+                //     flag_map,
+                //     "\r\n",
+                //     expanded,
+                // ];
+                if (!onReplay) {
+                    addToMoves(click_row_number,click_column_number,false);
+                }
+            } if (onReplay) {
+                minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundColor = "rgba(232,157,51,0.5)";
+                setTimeout(function() {minesweeper_table.rows[click_row_number].cells[click_column_number].style.backgroundColor = "rgb(255,255,255)"},500);
+            } else if (is_flag_mode) {
+
             }
-            document.getElementById("win_audio").play();
-        };
-    } else if (left_flag < 0) {
-        return;
-    } else if (first_click && cell.parentNode.parentNode.parentNode.id != "gameHead") {
-        return;
+            break;
+
+        case "put_flag":
+            // right click, hold, and flag mode
+            var right_click_row = cell.parentNode.rowIndex;
+            if (remain_flags > 0 && !first_click && minesweeper_table.rows[right_click_row].cells[cell.cellIndex].innerHTML == "" && flag_map[right_click_row][cell.cellIndex] != 1 && expanded[right_click_row][cell.cellIndex] != 1 && cell.parentNode.parentNode.parentNode.id != "gameHead") {
+                if (!onReplay) {
+                    addToMoves(right_click_row,cell.cellIndex,true);
+                }
+                remain_flags -= 1;
+                cell.style.backgroundImage = "url('./image/Minesweeper_Flag_Icon.png')";
+                cell.style.backgroundSize = gridWidth * 0.8 + 'px' + " " + gridWidth * 0.8 + 'px';
+                document.getElementById("remaining_flag_number").innerHTML = remain_flags;
+                flag_map[right_click_row][cell.cellIndex] = 1;
+                if (!document.getElementById("put_flag_audio").paused) {
+                    document.getElementById("put_flag_audio").currentTime = 0;
+                }
+                document.getElementById("put_flag_audio").play();
+                window.navigator.vibrate([500]);
+
+                won = true;
+                for (let r = 0; r < map_size; r++) {
+                    for (let c = 0; c < map_size; c++) {
+                        if (map[r][c] == 9 && flag_map[r][c] !== 1) {
+                            won = false;
+                            break;
+                        }
+                    }
+                    if (!won) {
+                        break;
+                    }
+                }
+
+                if (won) {;
+                    clearInterval(record_time);
+                    if (login) {
+                        document.getElementById("time_spent").innerHTML = document.getElementById("total_used_time").innerHTML + "s";
+                        if (diffculty == "Easy") {
+                            document.getElementById("landmine_removed").innerHTML = 10;
+                        } else if (diffculty == "Hard") {
+                            document.getElementById("landmine_removed").innerHTML = 40;
+                        } else if (diffculty == "Expert") {
+                            document.getElementById("landmine_removed").innerHTML = 99;
+                        }
+                        document.getElementById("win_rate").innerHTML = win_rate + "%";
+                        openMenu("win_msg", "openPopup");
+                        store_data(document.getElementById("total_used_time").innerHTML,"./src/shortest_time.php");
+                        store_data("win","./src/win_rate.php");
+                    } else {
+                        document.getElementById("time_spent").innerHTML = document.getElementById("total_used_time").innerHTML + "s";
+                        if (diffculty == "Easy") {
+                            document.getElementById("landmine_removed").innerHTML = 10;
+                        } else if (diffculty == "Hard") {
+                            document.getElementById("landmine_removed").innerHTML = 40;
+                        } else if (diffculty == "Expert") {
+                            document.getElementById("landmine_removed").innerHTML = 99;
+                        };
+                        document.getElementById("win_rate_p").innerHTML = "<a href='login.php'>login</a> to record your win rate";
+                        openMenu("win_msg", "openPopup");
+                    }
+                    document.getElementById("win_audio").play();
+                };
+            } else if (remain_flags < 0) {
+                return;
+            } else if (first_click) {
+                return;
+            }
+            break;
     }
 };
 
@@ -523,16 +520,9 @@ function changeSize() {
     init();
 };
 
-function check_stats() {
-   alert("Your win rate is " + win_rate + "%\r\nThe best record on this server is " + serverBestTime + " seconds");
-}
-
 function log_out() {
     // log out
-    // login = false;
-    // document.getElementById("register").innerHTML = "register";
-    // document.getElementById("register").href = "register.php";
-    store_data("logout","log_out.php");
+    store_data("logout","./src/log_out.php");
     location.reload();
 }
 
@@ -555,19 +545,20 @@ function store_data(data,phpName) {
                     alert("You are the first one who won in the whole server!");
                 };
             };
-            // console.log(phpResponse);
         })
         .catch(error => {
             console.error("Error:", error);
         });
 };
 
-function show_popup() {
-    document.getElementById("win_msg").classList.add("openPopup");
+function openMenu(target, className) {
+    document.getElementById(target).classList.add(className);
+    minesweeper_table.classList.toggle("background_blur");
 }
 
-function close_popup() {
-    document.getElementById("win_msg").classList.remove("openPopup");
+function closeMenu(target, className) {
+    document.getElementById(target).classList.remove(className);
+    minesweeper_table.classList.remove("background_blur");
 }
 
 function addToMoves(row,col,flag,time) {
@@ -582,24 +573,21 @@ function addToMoves(row,col,flag,time) {
 
 function replay() {
     td_cells.forEach(detect_td_onclick => {
-        detect_td_onclick.removeEventListener("click", click_column);
-    });
-
-    tr_cells.forEach(detect_tr_onclick => {
-        detect_tr_onclick.removeEventListener("click", click_row);
+        detect_td_onclick.removeEventListener("click", click);
     });
     
-    close_popup();
+    closeMenu("win_msg", "openPopup");
     init(true);
     let currentIndex = 0;
 
     function startReplay() {
         if (currentIndex < moves.length) {
             if (!moves[currentIndex].flag) {
-                click_column(minesweeper_table.rows[moves[currentIndex].row].cells[moves[currentIndex].col]);
-                click_row(minesweeper_table.rows[moves[currentIndex].row],true);
+                currentAction = "click_cell";
+                click(minesweeper_table.rows[moves[currentIndex].row].cells[moves[currentIndex].col], true);
             } else if (moves[currentIndex].flag) {
-                right_click(minesweeper_table.rows[moves[currentIndex].row].cells[moves[currentIndex].col],true);
+                currentAction = "put_flag";
+                click(minesweeper_table.rows[moves[currentIndex].row].cells[moves[currentIndex].col], true);
             }
             currentIndex++;
             setTimeout(startReplay,1000);
@@ -609,7 +597,7 @@ function replay() {
 }
 
 document.getElementById("new_game_btn").addEventListener("click",function() {
-    close_popup();
+    closeMenu("win_msg", "openPopup");
 }) 
 
 init(false);

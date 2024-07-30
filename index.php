@@ -2,46 +2,59 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>扫雷</title>
+        <title>Minesweeper</title>
         <meta http-equiv="expires" content="0">
         <meta http-equiv="Pragma" content="no-cache">
         <meta http-equiv="cache-control" content="no-cache">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="Minesweeper_Style.css">
-        <link rel="icon" type="image/x-icon" href="Website_Icon.ico">
+        <link href="./src/index.css" rel="stylesheet" media="screen and (min-width: 700px)" type="text/css">
+        <link href="./src/smallscreen.css" rel="stylesheet" media="screen and (max-width: 700px)" type="text/css">
+        <link href="./image/Website_Icon.ico" rel="icon" type="image/x-icon">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' >
     </head>
-    <body>
+    <body id="body">
         <header>
             <div class="game-title">
-                <img src="Minesweeper_Flag_Icon.png" alt="icon" height="60" width="60">
-                <span id="bigtitle" style="font-weight: bold;">Minesweeper</span>
+                <img src="./image/Minesweeper_Flag_Icon.png" alt="icon" height="60" width="60">
+                <span id="bigtitle" class="title">Minesweeper</span>
             </div>
             <div class="profile">
-                <div style="font-size: x-large;"><a id="register" href="register.php" class="register">Register</a></div>
+                <div class="user-info">
+                    <i class='bx bxs-cog' onclick="openMenu('setting', 'setting-show')"></i>
+                    <div style="font-size: x-large;"><a id="register" href="register.php" class="register">Register</a></div>
+                </div>
                 <div id="dropdown_menu" class="dropdown">
-                    <a href="javascript:check_stats()" id="stats">Stats</a>
+                    <a href="javascript:openMenu('stats', 'stats-show')" class="stats-text">Stats</a>
                     <hr>
                     <a href="javascript:log_out()" style="color: red;" id="log_out">Log out</a>
                 </div>
             </div>
         </header>
 
-        <table id="gameHead" style="visibility: hidden;">
-            <tr>
-                <td>
-                    <div class="flag_mode_div" style="text-align: right;">
-                        <div id="fastestTime" style="font-size: large;"></div>
-                        <span id="serverBestDiv" style="font-size: large;"></span>
-                    </div>
-                </td>
-            </tr>
-        </table>
+        <div class="setting" id="setting">
+            <div class="setting-head">
+                <div class="setting-text">Setting</div>
+                <i class='bx bxs-x-circle' onclick="closeMenu('setting', 'setting-show')"></i>
+            </div>
+            <div class="diffculty-selection">
+                Diffculty
+                <select name="diffculty" id="diffculty" class="diffculty">
+                    <option value="easy">Easy</option>
+                    <option value="Hard">Hard</option>
+                    <option value="Expert">Expert</option>
+                </select>
+            </div>
+            <div class="toturial">
+                How to play
+                <p style="font-weight: normal;">In minesweeper game, players need to find out the hidden mines by using the numbers that shows how many mines are there within the 8 blocks beside.</p>
+            </div>
+        </div>
         
         <div id="win_msg" class="win_msg">
             <div class="winHead">
                 <span>You won!</span>
-                <button type="button" id="close_win_msg" onclick="close_popup()">x</button>
+                <i class='bx bxs-x-circle' onclick="closeMenu('win_msg', 'openPopup')"></i>
             </div>
             <div style="background-color: white;" class="win_stats">
                 <br>
@@ -56,25 +69,45 @@
             </div>
         </div>
 
+        <div class="stats" id="stats">
+            <div class="title">Your Stats</div>
+            <i class='bx bxs-x-circle' onclick="closeMenu('stats', 'stats-show')"></i>
+            <div class="win-rate">
+                <div class="win-rate-text">Win Rate</div>
+                <div class="win-rate-data" id="winRateData"></div>
+            </div>
+            <div class="best-time">
+                <div class="best-time-text">Personal Record</div>
+                <div class="best-time-data" id="bestTimeData"></div>
+            </div>
+            <div class="server-best">
+                <div class="server-best-text">Server Record</div>
+                <div class="server-best-data" id="serverBestData"></div>
+            </div>
+        </div>
+
         <div> 
             <audio id="lose_audio">
-                <source src="bomb_explosion.mp3" type="audio/mpeg">
+                <source src="./audio/bomb_explosion.mp3" type="audio/mpeg">
             </audio>
             <audio id="click_audio">
-                <source src="Minesweeper_Click.mp3" type="audio/mpeg">
+                <source src="./audio/Minesweeper_Click.mp3" type="audio/mpeg">
             </audio>
             <audio id="gameStart" autoplay>
-                <source src="start.mp3" type="audio/mpeg">
+                <source src="./audio/start.mp3" type="audio/mpeg">
             </audio>
             <audio id="win_audio">
-                <source src="minesweeper_win.mp3" type="audio/mpeg">
+                <source src="./audio/minesweeper_win.mp3" type="audio/mpeg">
+            </audio>
+            <audio id="put_flag_audio">
+                <source src="./audio/put_flag.mp3" type="audio/mpeg">
             </audio>
         </div>
         
         <main>
             <div class="head" id="game_head">
                 <div class="leftFlag">
-                    <img src="flag_button.png" height="24" onclick="switch_flag_mode()" style="cursor: pointer; margin-right: 2px;" id="flag_mode_button">
+                    <img src="./image/flag_button.png" onclick="switch_flag_mode()" style="cursor: pointer; margin-right: 2px;" id="flag_mode_button">
                     <span id="remaining_flag_number" class="remain-flag"></span>
                 </div>
                 <div id="total_used_time" style="text-align: right;" class="time"></div>
@@ -120,13 +153,9 @@
         <script>
             if (login) {
                 document.getElementById("register").innerHTML = jsUsername;
-                document.getElementById("register").href = "javascript:user_menu();";
-                if (bestTime != "") {
-                    document.getElementById("fastestTime").innerHTML = "Your best record: " + bestTime + " seconds";
-                };
+                document.getElementById("register").href = "#";
             };
-            document.getElementById("serverBestDiv").innerHTML = "Server best record: " + serverBestTime + " seconds";
         </script>
-        <script src="Minesweeper_Javascript.js"></script>
+        <script src="index.js"></script>
     </body>
 </html>

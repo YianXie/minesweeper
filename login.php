@@ -48,11 +48,11 @@ session_start();
         <title>Minesweeper Login</title>
     </head>
     <body>
-        <img src="Minesweeper_Flag_Icon.png" alt="logo" style="height: 100px;">
+        <img src="./image/Minesweeper_Flag_Icon.png" alt="logo" style="height: 100px;">
         <h1 id="register_page">Login Page</h1>
         <br>
         <div id="loginResult"></div>
-        <form method="POST" action="userdata.php">
+        <form method="POST" action="./userdata.php">
             <div class="minesweeper_register_div">
                 <label for="username" id="username_text"><b>Username<b></label>
                 <br><br>
@@ -68,7 +68,7 @@ session_start();
 
         <?php
         if (isset($_GET["error"])) {
-            echo "<p style='color: red;'>用户名或密码不正确，请重试。</p>";
+            echo "<p style='color: red;'>Wrong password or username. Please try again.</p>";
         }
         ?>
             <!-- need to link to register page -->

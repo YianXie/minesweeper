@@ -1,7 +1,8 @@
 <?php 
 session_start();
 
-$file_name = "username_password.txt";
+$file_name = "./username_password.txt";
+echo $file_name;
 $loggedIn = false;
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
@@ -10,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $username = (string)$username;
     $password = (string)$password;
 
-    $file = fopen($file_name,"a") or die("unable to open file");
+    $file = fopen($file_name,"a") or die("unable open file");
 // if there is no username or passoword, the file will not close.
     if ($username !== "" && $password !== "") {
         fwrite($file,$username);
@@ -21,7 +22,8 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     }
 } else if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $file = fopen($file_name, "r") or die("unable to open file");
+    $file = fopen($file_name, "r") or die("cannot to open file");
+    echo $file;
 
     // $login_username = htmlspecialchars($_POST["username"]);
     // $login_password = htmlspecialchars($_POST["password"]);

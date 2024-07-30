@@ -45,12 +45,12 @@
         <title>Minesweeper Register</title>
     </head>
     <body>
-        <img src="Minesweeper_Flag_Icon.png" alt="Flag" style="height:100px;">
+        <img src="./image/Minesweeper_Flag_Icon.png" alt="Flag" style="height:100px;">
         <h1 id="register_page">Register Page</h1>
         <br>
         <!-- should not use the full path -->
         <!-- should not use GET, otherwise the password will be leak -->
-        <form action="userdata.php" method="GET" onsubmit="check_password()">
+        <form action="./userdata.php" method="GET" onsubmit="check_password()">
             <div class="calculater_register_div">
                 <label for="username" id="username_text"><b>Username<b></label>
                 <br><br>
